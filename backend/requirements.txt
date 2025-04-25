@@ -1,0 +1,5 @@
+stellar-sdk
+fastapi
+slowapi
+python-jose
+pymongo

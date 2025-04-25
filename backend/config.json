@@ -1,0 +1,10 @@
+{
+    "server": {
+        "host": "",
+        "port": 8000
+    },
+    "database": {
+        "url": "mongodb://localhost:27017/",
+        "database_name": "astrocoders"
+    }
+}

@@ -1,0 +1,169 @@
+cd /Users/sandipkumardey/Desktop/test/hackathon/EventX-Hackhazards25/backend
+source venv/bin/activate
+uvicorn main:app --reload --host 0.0.0.0 --port 8000# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+debug.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# dotenv environment variables
+.env
+.env.local
+# .env.example is NOT ignored so teams can see required keys
+
+# MongoDB dump files
+dump/
+
+# macOS
+.DS_Store
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs
+*.log
+
+# System files
+Thumbs.db
+
+# Ignore local scripts output
+scripts/__pycache__/
+
+# Ignore test database files
+test.db
+
+# Ignore compiled files
+*.pyo
+
+# Ignore wheel files
+*.whl
+
+# Database files
+*.sqlite3
+*.db
+*.db-journal
+
+# Security
+secrets.json
+*.pem
+*.key
+*.crt
+
+# FastAPI auto-generated files
+instance/
+
+# Node/npm (if any JS in backend)
+node_modules/
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Python profiling
+*.prof
+
+# Backup files
+*.bak
+*.tmp
+
+# Misc
+*.log
+
+# Ignore local settings
+settings_local.py
+
+# Ignore test output
+*.out
+
+# Ignore migrations (if using alembic or similar and want to exclude)
+migrations/
+
+# Ignore coverage reports
+.coverage
+coverage.xml
+htmlcov/
+
+# Ignore cache
+.cache/
+
+# Ignore pyright and mypy cache
+.pyright/
+.mypy_cache/
+
+# Ignore Starlette/FastAPI debug toolbar
+.debug_toolbar/
+
+# Ignore ipython history
+.ipython/
+
+# Ignore pytest cache
+.pytest_cache/
+
+# Ignore test artifacts
+test_*.pyc
+
+# Ignore any local dev config
+local_settings.py
+
+# Ignore output from scripts
+data/
+output/
+
+# Ignore cryptography cache
+cryptography/
+
+# Ignore envrc
+.envrc

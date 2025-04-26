@@ -7,6 +7,7 @@ import base64
 from typing import Optional
 from database.database import Database
 import requests
+import random
 
 router = APIRouter()
 
@@ -109,3 +110,37 @@ async def payment_webhook(payload: dict):
         return {"success": True, "message": "Order marked as completed."}
     db.close()
     return {"success": False, "message": "Order not found for memo."}
+
+async def mock_base_payout(order_id: str, seller_wallet: str, amount: float, asset_code: str = "USDC") -> dict:
+    """
+    Simulate a payout to the seller on Base chain. Returns a fake transaction hash.
+    """
+    fake_tx_hash = f"0x{random.getrandbits(256):064x}"
+    # Optionally, log payout in DB or file
+    return {
+        "order_id": order_id,
+        "seller_wallet": seller_wallet,
+        "amount": amount,
+        "asset_code": asset_code,
+        "tx_hash": fake_tx_hash,
+        "status": "mocked"
+    }
+
+@router.post("/payout/{order_id}")
+async def trigger_mock_payout(order_id: str):
+    db = Database()
+    order = await db.get_order_by_id(order_id)
+    db.close()
+    if not order or "seller_wallet" not in order or order.get("status") != "completed":
+        raise HTTPException(status_code=400, detail="Order not eligible for payout or missing seller wallet.")
+    payout = await mock_base_payout(
+        order_id=order_id,
+        seller_wallet=order["seller_wallet"],
+        amount=order["total_amount"],
+        asset_code="USDC"
+    )
+    # Optionally update order with payout info
+    db = Database()
+    await db.orders.update_one({"_id": db._convert_id(order_id)}, {"$set": {"base_payout": payout}})
+    db.close()
+    return {"success": True, "payout": payout}

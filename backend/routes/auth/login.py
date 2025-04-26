@@ -1,7 +1,6 @@
-
 from fastapi import APIRouter, HTTPException, status, Response, Request
 from typing import Dict
-from database.database import DB  
+from database.database import Database  
 from utils.helpers.helpers import md5_hash
 import secrets
 router = APIRouter()
@@ -9,7 +8,9 @@ router = APIRouter()
 @router.post("/login")
 async def login(request: Request, response: Response) -> Dict[str, str]:
     json_data = await request.json()
-    user = DB.find_one({"username": json_data.get("username")}, DB.users_collection)
+    db = Database()
+    user = await db.get_user_by_username(json_data.get("username"))
+    db.close()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -27,7 +28,9 @@ async def login(request: Request, response: Response) -> Dict[str, str]:
 async def register(request: Request) -> Dict[str, str]:
     json_data = await request.json()
 
-    existing_user = DB.find_one({"username": json_data.get("username")}, DB.users_collection)
+    db = Database()
+    existing_user = await db.get_user_by_username(json_data.get("username"))
+    db.close()
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists")
 
@@ -37,6 +40,8 @@ async def register(request: Request) -> Dict[str, str]:
         "password": hashed_password,
         "access-token": secrets.token_hex(16)
     }
-    DB.insert_one(new_user, DB.users_collection)
+    db = Database()
+    await db.create_user(new_user)
+    db.close()
 
     return {"message": "User registered successfully"}

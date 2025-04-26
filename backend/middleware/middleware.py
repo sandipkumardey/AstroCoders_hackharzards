@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse  #
-from database.database import DB
+from database.database import Database
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -15,7 +15,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 content={"code": 401, "message": "Unauthorized"}
             )
         
-        user_data = DB.find_one({"access-token": token}, DB.users_collection)
+        db = Database()
+        user_data = await db.get_user_by_token(token)
+        db.close()
         if not user_data:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,4 +1,6 @@
-# Byte-compiled / optimized / DLL files
+cd /Users/sandipkumardey/Desktop/test/hackathon/EventX-Hackhazards25/backend
+source venv/bin/activate
+uvicorn main:app --reload --host 0.0.0.0 --port 8000# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -56,7 +58,8 @@ coverage.xml
 
 # dotenv environment variables
 .env
-.env.*
+.env.local
+# .env.example is NOT ignored so teams can see required keys
 
 # MongoDB dump files
 dump/

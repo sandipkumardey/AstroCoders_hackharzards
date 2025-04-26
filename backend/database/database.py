@@ -64,6 +64,12 @@ class Database:
             result["_id"] = str(result["_id"])
         return result
     
+    async def get_user_by_token(self, token: str) -> Optional[Dict[str, Any]]:
+        result = self.users.find_one({"access-token": token})
+        if result:
+            result["_id"] = str(result["_id"])
+        return result
+    
     # Event operations
     async def create_event(self, event: Event) -> str:
         event_dict = event.model_dump(by_alias=True)

@@ -3,6 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, Calendar, CheckCircle, Shield, Ticket, Wallet, Zap } from "lucide-react"
 import { useRef, useEffect, useState } from "react"
+import { useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,6 +17,9 @@ import { toast } from "@/components/ui/use-toast";
 import { WalletPrompt } from "@/components/WalletPrompt";
 import SellerWalletConnect from "@/components/SellerWalletConnect";
 import MyTicketsDashboard from "@/components/MyTicketsDashboard";
+import CrossChainPaymentModal from "@/components/CrossChainPaymentModal";
+import TransactionHistory from "@/components/TransactionHistory";
+import AdminTransactions from "@/components/AdminTransactions";
 
 // Simulated wallet connect and role logic
 const ADMIN_WALLET = "0xAdminWalletAddress";
@@ -58,6 +62,10 @@ export default function Home() {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [isBuying, setIsBuying] = useState(false);
   const [buySuccess, setBuySuccess] = useState(false);
+  const [crossChainOpen, setCrossChainOpen] = useState(false);
+  const [lastCrossTx, setLastCrossTx] = useState<string | null>(null);
+
+  const { address } = useAccount();
 
   // Simulate wallet connect modal (UI only)
   function handleConnectWallet() {
@@ -232,6 +240,22 @@ export default function Home() {
       setIsBuying(false);
       setBuySuccess(true);
     }, 1500);
+  };
+
+  const handleCrossChainSuccess = (txHash: string) => {
+    setLastCrossTx(txHash);
+    toast({
+      title: "Cross-chain Payment Successful!",
+      description: `Tx Hash: ${txHash}`,
+      variant: "default",
+    });
+  };
+  const handleCrossChainError = (err: string) => {
+    toast({
+      title: "Cross-chain Payment Failed",
+      description: err,
+      variant: "destructive",
+    });
   };
 
   return (
@@ -641,7 +665,14 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section className="w-full flex justify-center mt-6">
+        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg shadow-lg" onClick={() => setCrossChainOpen(true)}>
+          Cross-Chain Payment (Stellar → Base)
+        </Button>
+      </section>
       <MyTicketsDashboard />
+      <TransactionHistory address={address || ""} />
+      <AdminTransactions />
       <ResellModal
         open={resellModalOpen}
         ticket={resellTicket}
@@ -685,6 +716,12 @@ export default function Home() {
         buySuccess={buySuccess}
         onClose={() => setShowDialog(false)}
         onConfirmBuy={handleConfirmBuy}
+      />
+      <CrossChainPaymentModal
+        open={crossChainOpen}
+        onClose={() => setCrossChainOpen(false)}
+        onSuccess={handleCrossChainSuccess}
+        onError={handleCrossChainError}
       />
     </div>
   )

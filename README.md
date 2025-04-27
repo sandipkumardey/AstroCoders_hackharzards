@@ -1,5 +1,5 @@
 # 🎟️ EventX: Cross-Chain Ticketing Platform  
-**AstroCoders | HackHazards 2025 Submission**
+**fsociety | HackHazards 2025 Submission**
 
 ---
 
@@ -74,6 +74,16 @@ Backend (Node.js, Express, SQLite)
 
 ---
 
+## 📸 Screenshots
+
+<img width="1470" alt="Image" src="https://github.com/user-attachments/assets/b361e5eb-4bb7-49fc-9225-a0e9bd57a76e" />
+
+<img width="1470" alt="Image" src="https://github.com/user-attachments/assets/db58e177-890b-47fc-a07e-071f6976b608" />
+
+<img width="1470" alt="Image" src="https://github.com/user-attachments/assets/07d56761-70dd-4d11-9250-bd6b46b0def6" />
+
+---
+
 ## 🔄 Mock vs. Real Blockchain
 
 - **Live endpoints**:  
@@ -133,12 +143,6 @@ Backend (Node.js, Express, SQLite)
 
 ---
 
-## 📸 Screenshots
-
-> _(Add screenshots of the wallet connect, buy modal, QR, and admin transaction log here!)_
-
----
-
 ## 🧠 Extensibility
 
 - Plug in any EVM chain for payouts or NFT minting
@@ -158,7 +162,7 @@ Backend (Node.js, Express, SQLite)
 
 ## 👨‍💻 Team
 
-AstroCoders  
+fsociety  
 Built for HackHazards 2025
 
 ---

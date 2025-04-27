@@ -5,7 +5,7 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 // @ts-ignore
-import QRCode from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 
 interface CrossChainPaymentModalProps {
   open: boolean;
@@ -207,7 +207,7 @@ export default function CrossChainPaymentModal({ open, onClose, onSuccess, onErr
               <b>Destination:</b> {paymentQR.split('?')[0].replace('stellar:', '')}<br />
               <b>Memo:</b> {paymentMemo}
             </div>
-            <QRCode value={paymentQR} size={148} className="my-2" />
+            <QRCodeCanvas value={paymentQR} size={148} className="my-2" />
             <div className="text-blue-600 text-xs mb-2">Waiting for payment confirmation on Stellar...</div>
             <Loader2 className="animate-spin text-blue-600 mb-3" size={36} />
           </div>

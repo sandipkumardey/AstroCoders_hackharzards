@@ -1,6 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 interface BuyTicketModalProps {
   open: boolean;
@@ -12,13 +14,26 @@ interface BuyTicketModalProps {
 }
 
 export default function BuyTicketModal({ open, event, isBuying, buySuccess, onClose, onConfirmBuy }: BuyTicketModalProps) {
+  const { isConnected, address } = useAccount();
+  const [showWalletPrompt, setShowWalletPrompt] = useState(false);
+
+  useEffect(() => {
+    if (open && !isConnected) setShowWalletPrompt(true);
+    else setShowWalletPrompt(false);
+  }, [open, isConnected]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Buy Ticket</DialogTitle>
         </DialogHeader>
-        {event && !buySuccess && (
+        {showWalletPrompt ? (
+          <div className="mb-4 flex flex-col items-center">
+            <div className="font-semibold text-lg mb-2">Connect your wallet to continue</div>
+            <Button className="w-full" onClick={() => window.location.reload()}>Connect Wallet</Button>
+          </div>
+        ) : event && !buySuccess && (
           <div className="mb-4">
             <div className="font-semibold text-lg mb-1">{event.title}</div>
             <div className="text-sm text-muted-foreground mb-1">{event.date} • {event.location}</div>
@@ -35,7 +50,7 @@ export default function BuyTicketModal({ open, event, isBuying, buySuccess, onCl
                 Close
               </Button>
             </div>
-          ) : (
+          ) : !showWalletPrompt && (
             <Button
               className="w-full"
               onClick={onConfirmBuy}

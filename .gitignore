@@ -62,3 +62,6 @@ backend/tests/test_tickets.py
 # Ignore secrets
 **/secrets.*
 **/private.*
+
+# Ignore .mjs files (build artifacts or temp transpiled files)
+*.mjs

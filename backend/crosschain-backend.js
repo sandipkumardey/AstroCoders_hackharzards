@@ -1,13 +1,12 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const { Server } = require('http');
-const { Keypair, Server: StellarServer, Asset, TransactionBuilder, Networks } = require('stellar-sdk');
-const { ethers } = require('ethers');
+const rateLimit = require('express-rate-limit');
+const StellarSDK = require('stellar-sdk');
+const { createWalletClient, http, sendTransaction } = require('@coinbase/onchainkit');
 const { mintNFTReceipt } = require('./mint-nft');
 const { uploadNftMetadata } = require('./upload-nft-metadata');
 const { saveTransaction, getAllTransactions, getTransactionsByAddress } = require('./tx-db');
-const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 
 const app = express();
@@ -17,14 +16,12 @@ app.use(bodyParser.json());
 const STELLAR_HORIZON_URL = process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org';
 const STELLAR_USDC_ISSUER = process.env.STELLAR_USDC_ISSUER || 'GA5ZSE7VJ4QFQG5...'; // TODO: Set real issuer
 const BASE_RPC_URL = process.env.BASE_RPC_URL || 'https://base-goerli.public.blastapi.io';
-const BASE_PRIVATE_KEY = process.env.BASE_PRIVATE_KEY || '';
+const BASE_PUBLIC_ADDRESS = process.env.BASE_PUBLIC_ADDRESS || '';
 const BASE_USDC_ADDRESS = process.env.BASE_USDC_ADDRESS || '';
 const NFT_CONTRACT_ADDRESS = process.env.NFT_CONTRACT_ADDRESS || '';
 const NFT_STORAGE_API_KEY = process.env.NFT_STORAGE_API_KEY || '';
 
-const stellarServer = new StellarServer(STELLAR_HORIZON_URL);
-const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
-const baseWallet = new ethers.Wallet(BASE_PRIVATE_KEY, provider);
+const stellarServer = new StellarSDK.Server(STELLAR_HORIZON_URL);
 
 // === Rate Limiting ===
 const apiLimiter = rateLimit({
@@ -96,7 +93,7 @@ app.get('/api/payment-status/:memo', async (req, res) => {
   });
 });
 
-// === 3. Trigger Base Transfer ===
+// === 3. Trigger Base Transfer (Refactored with OnchainKit) ===
 app.post(
   '/api/settle-on-base',
   [
@@ -113,13 +110,18 @@ app.post(
       const tx = rows[0];
       if (!tx) return res.status(404).json({ error: 'Not found' });
       try {
-        const baseTx = await baseWallet.sendTransaction({
-          to: seller,
-          value: ethers.parseEther(amount),
+        // --- OnchainKit wallet client setup ---
+        const walletClient = createWalletClient({
+          account: process.env.BASE_PUBLIC_ADDRESS,
+          transport: http(process.env.BASE_RPC_URL),
         });
-        await baseTx.wait();
-        await persistTransaction(memo, { ...tx, baseTxHash: baseTx.hash, status: 'settled' });
-        res.json({ status: 'settled', txHash: baseTx.hash });
+        // --- Send transaction using OnchainKit ---
+        const hash = await sendTransaction(walletClient, {
+          to: seller,
+          value: BigInt(Number(amount) * 1e18),
+        });
+        await persistTransaction(memo, { ...tx, baseTxHash: hash, status: 'settled' });
+        res.json({ status: 'settled', txHash: hash });
       } catch (err) {
         res.status(500).json({ error: err.message });
       }
@@ -200,6 +202,68 @@ app.get('/api/all-transactions', requireAdmin, async (req, res) => {
   getAllTransactions(async (err, rows) => {
     if (err) return res.status(500).json({ error: 'DB error' });
     res.json({ transactions: rows });
+  });
+});
+
+// === Ticket Resale: Invalidate Old, Issue New ===
+app.post('/api/resell-ticket', async (req, res) => {
+  const { oldTicketId, newBuyer, newAmount } = req.body;
+  try {
+    // 1. Mark old ticket as invalid
+    getTransactionsByAddress(oldTicketId, async (err, rows) => {
+      if (err || !rows[0]) return res.status(404).json({ error: 'Original ticket not found.' });
+      const oldTx = rows[0];
+      await saveTransaction({ ...oldTx, memo: oldTicketId, status: 'invalid', note: 'Ticket invalidated due to resale.' });
+      // 2. Issue new ticket for new buyer
+      const newTicketId = oldTicketId + '_resold_' + Math.random().toString(36).slice(2, 6);
+      await saveTransaction({
+        memo: newTicketId,
+        buyer: newBuyer,
+        seller: oldTx.seller,
+        amount: newAmount,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        note: `Ticket resold from ${oldTicketId} to ${newBuyer}`
+      });
+      res.json({
+        status: 'success',
+        oldTicket: { memo: oldTicketId, status: 'invalid' },
+        newTicket: { memo: newTicketId, buyer: newBuyer, status: 'pending' }
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// === MOCK Cross-Chain Transaction Endpoint ===
+app.post('/api/mock-crosschain', async (req, res) => {
+  const { buyer, seller, amount, ticketId } = req.body;
+  // 1. Simulate Stellar payment verification
+  const mockStellarTxHash = 'MOCK_STELLAR_TX_' + Math.random().toString(36).slice(2, 10).toUpperCase();
+  // 2. Simulate Base payout
+  const mockBaseTxHash = 'MOCK_BASE_TX_' + Math.random().toString(36).slice(2, 10).toUpperCase();
+  // 3. Simulate NFT mint
+  const mockNFTTxHash = 'MOCK_NFT_TX_' + Math.random().toString(36).slice(2, 10).toUpperCase();
+  // 4. Mark old ticket as invalid and issue new ticket
+  await saveTransaction({
+    memo: ticketId + '_mock',
+    buyer,
+    seller,
+    amount,
+    status: 'settled',
+    stellarTxHash: mockStellarTxHash,
+    baseTxHash: mockBaseTxHash,
+    nftTxHash: mockNFTTxHash,
+    createdAt: new Date().toISOString(),
+    note: 'This is a mock cross-chain transaction for demo purposes.'
+  });
+  res.json({
+    status: 'success',
+    message: 'Mock cross-chain transaction complete!',
+    stellarTxHash: mockStellarTxHash,
+    baseTxHash: mockBaseTxHash,
+    nftTxHash: mockNFTTxHash
   });
 });
 

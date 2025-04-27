@@ -6,12 +6,16 @@ import { useRef, useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { FeaturedEvents } from "@/components/featured-events"
+import { EventsSection } from "@/components/EventsSection"
 import { HowItWorks } from "@/components/how-it-works"
 import { Testimonials } from "@/components/testimonials"
 import { FAQ } from "@/components/faq"
+import BuyTicketModal from "@/components/BuyTicketModal";
 import { ResellModal } from "@/components/resell-modal";
 import { toast } from "@/components/ui/use-toast";
+import { WalletPrompt } from "@/components/WalletPrompt";
+import SellerWalletConnect from "@/components/SellerWalletConnect";
+import MyTicketsDashboard from "@/components/MyTicketsDashboard";
 
 // Simulated wallet connect and role logic
 const ADMIN_WALLET = "0xAdminWalletAddress";
@@ -50,6 +54,10 @@ export default function Home() {
   const [transferTicket, setTransferTicket] = useState<any>(null);
   const [transferWallet, setTransferWallet] = useState("");
   const [transferLoading, setTransferLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [isBuying, setIsBuying] = useState(false);
+  const [buySuccess, setBuySuccess] = useState(false);
 
   // Simulate wallet connect modal (UI only)
   function handleConnectWallet() {
@@ -210,6 +218,21 @@ export default function Home() {
       setTransferLoading(false);
     }
   }
+
+  const handleBuy = (event: any) => {
+    setSelectedEvent(event);
+    setShowDialog(true);
+    setBuySuccess(false);
+  };
+
+  const handleConfirmBuy = async () => {
+    setIsBuying(true);
+    // Simulate async purchase (replace with real logic)
+    setTimeout(() => {
+      setIsBuying(false);
+      setBuySuccess(true);
+    }, 1500);
+  };
 
   return (
     <div className="flex flex-col min-h-screen scroll-smooth">
@@ -462,10 +485,13 @@ export default function Home() {
         <HowItWorks />
       </section>
 
-      {/* Featured Events */}
-      <section id="events">
-        <FeaturedEvents />
-      </section>
+      {/* Wallet Prompt and Events Section */}
+      <WalletPrompt>
+        <section id="events">
+          <SellerWalletConnect />
+          <EventsSection onBuy={handleBuy} />
+        </section>
+      </WalletPrompt>
 
       {/* Benefits Section */}
       <section id="benefits" className="w-full py-12 md:py-24 bg-gray-50">
@@ -615,10 +641,11 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <MyTicketsDashboard />
       <ResellModal
         open={resellModalOpen}
-        onClose={() => setResellModalOpen(false)}
         ticket={resellTicket}
+        onClose={() => setResellModalOpen(false)}
         onResell={handleResellSubmit}
       />
       {transferModalOpen && (
@@ -651,6 +678,14 @@ export default function Home() {
           </div>
         </div>
       )}
+      <BuyTicketModal
+        open={showDialog}
+        event={selectedEvent}
+        isBuying={isBuying}
+        buySuccess={buySuccess}
+        onClose={() => setShowDialog(false)}
+        onConfirmBuy={handleConfirmBuy}
+      />
     </div>
   )
 }

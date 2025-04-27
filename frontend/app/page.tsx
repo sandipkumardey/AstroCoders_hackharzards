@@ -3,15 +3,23 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, Calendar, CheckCircle, Shield, Ticket, Wallet, Zap } from "lucide-react"
 import { useRef, useEffect, useState } from "react"
+import { useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { FeaturedEvents } from "@/components/featured-events"
+import { EventsSection } from "@/components/EventsSection"
 import { HowItWorks } from "@/components/how-it-works"
 import { Testimonials } from "@/components/testimonials"
 import { FAQ } from "@/components/faq"
+import BuyTicketModal from "@/components/BuyTicketModal";
 import { ResellModal } from "@/components/resell-modal";
 import { toast } from "@/components/ui/use-toast";
+import { WalletPrompt } from "@/components/WalletPrompt";
+import SellerWalletConnect from "@/components/SellerWalletConnect";
+import MyTicketsDashboard from "@/components/MyTicketsDashboard";
+import CrossChainPaymentModal from "@/components/CrossChainPaymentModal";
+import TransactionHistory from "@/components/TransactionHistory";
+import AdminTransactions from "@/components/AdminTransactions";
 
 // Simulated wallet connect and role logic
 const ADMIN_WALLET = "0xAdminWalletAddress";
@@ -50,6 +58,14 @@ export default function Home() {
   const [transferTicket, setTransferTicket] = useState<any>(null);
   const [transferWallet, setTransferWallet] = useState("");
   const [transferLoading, setTransferLoading] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [isBuying, setIsBuying] = useState(false);
+  const [buySuccess, setBuySuccess] = useState(false);
+  const [crossChainOpen, setCrossChainOpen] = useState(false);
+  const [lastCrossTx, setLastCrossTx] = useState<string | null>(null);
+
+  const { address } = useAccount();
 
   // Simulate wallet connect modal (UI only)
   function handleConnectWallet() {
@@ -210,6 +226,37 @@ export default function Home() {
       setTransferLoading(false);
     }
   }
+
+  const handleBuy = (event: any) => {
+    setSelectedEvent(event);
+    setShowDialog(true);
+    setBuySuccess(false);
+  };
+
+  const handleConfirmBuy = async () => {
+    setIsBuying(true);
+    // Simulate async purchase (replace with real logic)
+    setTimeout(() => {
+      setIsBuying(false);
+      setBuySuccess(true);
+    }, 1500);
+  };
+
+  const handleCrossChainSuccess = (txHash: string) => {
+    setLastCrossTx(txHash);
+    toast({
+      title: "Cross-chain Payment Successful!",
+      description: `Tx Hash: ${txHash}`,
+      variant: "default",
+    });
+  };
+  const handleCrossChainError = (err: string) => {
+    toast({
+      title: "Cross-chain Payment Failed",
+      description: err,
+      variant: "destructive",
+    });
+  };
 
   return (
     <div className="flex flex-col min-h-screen scroll-smooth">
@@ -462,10 +509,13 @@ export default function Home() {
         <HowItWorks />
       </section>
 
-      {/* Featured Events */}
-      <section id="events">
-        <FeaturedEvents />
-      </section>
+      {/* Wallet Prompt and Events Section */}
+      <WalletPrompt>
+        <section id="events">
+          <SellerWalletConnect />
+          <EventsSection onBuy={handleBuy} />
+        </section>
+      </WalletPrompt>
 
       {/* Benefits Section */}
       <section id="benefits" className="w-full py-12 md:py-24 bg-gray-50">
@@ -615,10 +665,18 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <section className="w-full flex justify-center mt-6">
+        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg shadow-lg" onClick={() => setCrossChainOpen(true)}>
+          Cross-Chain Payment (Stellar → Base)
+        </Button>
+      </section>
+      <MyTicketsDashboard />
+      <TransactionHistory address={address || ""} />
+      <AdminTransactions />
       <ResellModal
         open={resellModalOpen}
-        onClose={() => setResellModalOpen(false)}
         ticket={resellTicket}
+        onClose={() => setResellModalOpen(false)}
         onResell={handleResellSubmit}
       />
       {transferModalOpen && (
@@ -651,6 +709,20 @@ export default function Home() {
           </div>
         </div>
       )}
+      <BuyTicketModal
+        open={showDialog}
+        event={selectedEvent}
+        isBuying={isBuying}
+        buySuccess={buySuccess}
+        onClose={() => setShowDialog(false)}
+        onConfirmBuy={handleConfirmBuy}
+      />
+      <CrossChainPaymentModal
+        open={crossChainOpen}
+        onClose={() => setCrossChainOpen(false)}
+        onSuccess={handleCrossChainSuccess}
+        onError={handleCrossChainError}
+      />
     </div>
   )
 }
